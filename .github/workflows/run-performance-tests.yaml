@@ -1,0 +1,27 @@
+name: Run Performance Tests
+
+on:
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+steps:
+- name: Checkout code
+  uses: actions/checkout@v3
+
+- name: Set up Python
+  uses: actions/setup-python@v4
+  with:
+    python-version: '3.11'
+
+- name: Install Dependencies
+  RUN: |
+    python -m pip install upgrade pip
+
+- name: Run Performance Tests
+  run: |
+    python performance/get_gridded_data/time_1pt_1py.py
+  
+  
