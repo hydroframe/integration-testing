@@ -22,4 +22,8 @@ jobs:
 
       - name: Run Performance Tests
         run: |
+          pwd
+          ls
+          python --version
+          echo $HOME
           python $HOME/performance/get_gridded_data/time_1pt_1py.py
