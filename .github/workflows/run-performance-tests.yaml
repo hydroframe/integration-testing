@@ -27,6 +27,6 @@ jobs:
           whoami
           python --version
           echo $HOME
-          ls $HOME/performance
-          ls $HOME/performance/get_gridded_data
+          ls performance
+          ls performance/get_gridded_data
           python $HOME/performance/get_gridded_data/time_1pt_1py.py
