@@ -22,4 +22,4 @@ jobs:
 
       - name: Run Performance Tests
         run: |
-          python performance/get_gridded_data/time_1pt_1py.py
+          python $HOME/performance/get_gridded_data/time_1pt_1py.py
