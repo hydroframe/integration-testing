@@ -29,4 +29,4 @@ jobs:
           echo $HOME
           ls performance
           ls performance/get_gridded_data
-          python $HOME/performance/get_gridded_data/time_1pt_1py.py
+          python performance/get_gridded_data/time_1pt_1py.py
