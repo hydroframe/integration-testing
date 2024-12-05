@@ -12,10 +12,9 @@ jobs:
     runs-on: ubuntu-latest
 
   steps:
-  - name: Checkout code
-    uses: actions/checkout@v3
+  - uses: actions/checkout@v3
 
-  - name: Set up Python
+  - name: SetupPython
     uses: actions/setup-python@v4
     with:
       python-version: '3.11'
