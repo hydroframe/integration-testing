@@ -1,28 +1,25 @@
 ---
 name: Run Performance Tests
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:   # Allows manual trigger
+on: [push]
 
 jobs:
-  run-script:
+  runscript:
     runs-on: ubuntu-latest
 
-  steps:
-  - uses: actions/checkout@v3
+    steps:
+      - name: GetCode
+        uses: actions/checkout@v3
 
-  - name: SetupPython
-    uses: actions/setup-python@v4
-    with:
-      python-version: '3.11'
+      - name: SetupPython
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-  - name: Install Dependencies
-    run: |
-      python -m pip install upgrade pip
+      - name: Install Dependencies
+        run: |
+          python -m pip install upgrade pip
 
-  - name: Run Performance Tests
-    run: |
-      python performance/get_gridded_data/time_1pt_1py.py
+      - name: Run Performance Tests
+        run: |
+          python performance/get_gridded_data/time_1pt_1py.py
