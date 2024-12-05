@@ -18,7 +18,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          python -m pip install upgrade pip
+          python -m pip install --upgrade pip
 
       - name: Run Performance Tests
         run: |
