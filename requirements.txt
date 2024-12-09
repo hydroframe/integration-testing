@@ -1,0 +1,5 @@
+pytest>=8.3
+numpy>=1.24
+pftools>=1.3.11
+subsettools>=2.0
+hf_hydrodata>=1.3
