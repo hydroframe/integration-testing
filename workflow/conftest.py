@@ -32,7 +32,7 @@ def setup_dir_structure(set_parflow_dir):
         mkdir(forcing_dir)
         pf_out_dir = os.path.join(output_dir, run_name)
         mkdir(pf_out_dir)
-        correct_output_dir = os.path.abspath(os.path.join("correct_output", run_name))
+        correct_output_dir = os.path.abspath(os.path.join("workflow", "correct_output", run_name))
         target_runscript = os.path.join(pf_out_dir, run_name + ".yaml")
         return (
             static_write_dir,
