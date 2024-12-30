@@ -1,7 +1,17 @@
 ---
 name: Run Performance Tests
 
-on: [push]
+on:
+  workflow_dispatch:
+    inputs:
+      cache:
+        description: "Cache of GPFS"
+        required: false
+        default: "cold"
+      wy:
+        description: "Water year of data used for test"
+        required: false
+        default: "1997"
 
 jobs:
   runscript:
@@ -19,14 +29,15 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
+          python -m pip install hf_hydrodata
+          python -m pip install pytest
 
       - name: Run Performance Tests
         run: |
-          pwd
-          ls -l
-          whoami
-          python --version
-          echo $HOME
-          ls performance
-          ls performance/get_gridded_data
-          python performance/get_gridded_data/time_1pt_1wy.py
+          pytest performance/test_1pt_1wy.py --cache=cold
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: log-artifacts
+          path: performance/artifacts/
