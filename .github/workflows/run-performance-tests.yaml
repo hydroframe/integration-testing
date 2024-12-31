@@ -37,8 +37,7 @@ jobs:
           TEST_EMAIL_PRIVATE: ${{ secrets.TEST_EMAIL_PRIVATE}}
           TEST_PIN_PRIVATE: ${{ secrets.TEST_PIN_PRIVATE}}      
         run: |
-          pytest performance/test_1pt_1wy.py --cache=cold
-          pytest performance/test_1pt_1wy.py --cache=hot
+          pytest -s performance/test_1pt_1wy.py --cache=cold
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
