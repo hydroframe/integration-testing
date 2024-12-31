@@ -26,6 +26,7 @@ def test_scenario(request):
     end_time_str = end_time.strftime("%Y-%m-%d")
     test_email_private = os.getenv("TEST_EMAIL_PRIVATE")
     test_pin_private = os.getenv("TEST_PIN_PRIVATE")
+    print("EMAIL", test_email_private, "PIN", test_pin_private)
     if not test_email_private or not test_pin_private:
         raise ValueError("No email/pin environment variables set")
     hf.register_api_pin(f"{test_email_private}@gmail.com", test_pin_private)
