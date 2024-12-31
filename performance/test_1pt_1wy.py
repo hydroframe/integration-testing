@@ -18,6 +18,7 @@ def test_scenario(request):
     create logging artifcat with performance information.
     """
 
+    print("Start scenario performance test")
     wy = request.config.getoption("--wy")
     wy = int(wy)
     start_time = datetime.datetime.strptime("2000-10-01", "%Y-%m-%d").replace(year=wy)
@@ -26,7 +27,6 @@ def test_scenario(request):
     end_time_str = end_time.strftime("%Y-%m-%d")
     test_email_private = os.getenv("TEST_EMAIL_PRIVATE")
     test_pin_private = os.getenv("TEST_PIN_PRIVATE")
-    print("EMAIL", test_email_private, "PIN", test_pin_private)
     if not test_email_private or not test_pin_private:
         raise ValueError("No email/pin environment variables set")
     hf.register_api_pin(f"{test_email_private}", test_pin_private)
@@ -34,7 +34,9 @@ def test_scenario(request):
     _execute_scenario(start_time_str, end_time_str)
     t1 = time.time()
     duration = round(t1 - t0, 2)
+    print("Finish scenario performance test", duration)
     _write_log(request, duration)
+    print("Wrote log file")
 
 
 def _write_log(request, duration):
@@ -56,6 +58,7 @@ def _write_log(request, duration):
     line = f"{cur_date},{scenario_name},{hf_hydrodata_version},{hydrodata_url},{server},{cache_state},{comment},{duration}\n"
     with open(f"{log_directory}/log_artifact.csv", "a+") as stream:
         stream.write(line)
+        print(line)
 
 
 def _execute_scenario(start_time_str, end_time_str):
