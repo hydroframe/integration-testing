@@ -3,7 +3,7 @@ Performance test for the scenario to 1 point for 1 water year
 using hf_hydrodata.
 """
 
-#pylint: disable=C0301,W1514
+# pylint: disable=C0301,W1514
 
 import os
 import importlib
@@ -18,7 +18,6 @@ def test_scenario(request):
     create logging artifcat with performance information.
     """
 
-    print("Start scenario performance test")
     wy = request.config.getoption("--wy")
     wy = int(wy)
     start_time = datetime.datetime.strptime("2000-10-01", "%Y-%m-%d").replace(year=wy)
@@ -34,9 +33,7 @@ def test_scenario(request):
     _execute_scenario(start_time_str, end_time_str)
     t1 = time.time()
     duration = round(t1 - t0, 2)
-    print("Finish scenario performance test", duration)
     _write_log(request, duration)
-    print("Wrote log file")
 
 
 def _write_log(request, duration):
@@ -59,7 +56,6 @@ def _write_log(request, duration):
     line = f"{cur_date},{scenario_name},{hf_hydrodata_version},{hydrodata_url},{server},{cache_state},{wy},{comment},{duration}\n"
     with open(f"{log_directory}/log_artifact.csv", "a+") as stream:
         stream.write(line)
-        print(line)
 
 
 def _execute_scenario(start_time_str, end_time_str):

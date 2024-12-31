@@ -39,6 +39,7 @@ jobs:
         run: |
           pytest -s performance/test_1pt_1wy.py --wy 2002 --cache=cold
           pytest -s performance/test_1pt_1wy.py --wy 2002 --cache=hot
+          echo "Show ./artifacts/log_artifact.csv file"
           cat ./artifacts/log_artifact.csv
 
       - name: Upload artifacts
