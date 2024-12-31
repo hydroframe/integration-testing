@@ -44,6 +44,7 @@ def _write_log(request, duration):
 
     scenario_name = "read_365_days_1_point"
     cache_state = request.config.getoption("--cache")
+    wy = request.config.getoption("--wy")
     hf_hydrodata_version = importlib.metadata.version("hf_hydrodata")
     comment = request.config.getoption("--comment")
     server = request.config.getoption("--server")
@@ -55,7 +56,7 @@ def _write_log(request, duration):
     log_directory = "./artifacts"
     os.makedirs(log_directory, exist_ok=True)
     cur_date = datetime.datetime.now().strftime("%Y-%m-%d:%H:%M:%S")
-    line = f"{cur_date},{scenario_name},{hf_hydrodata_version},{hydrodata_url},{server},{cache_state},{comment},{duration}\n"
+    line = f"{cur_date},{scenario_name},{hf_hydrodata_version},{hydrodata_url},{server},{cache_state},{wy},{comment},{duration}\n"
     with open(f"{log_directory}/log_artifact.csv", "a+") as stream:
         stream.write(line)
         print(line)
