@@ -29,7 +29,7 @@ def test_scenario(request):
     print("EMAIL", test_email_private, "PIN", test_pin_private)
     if not test_email_private or not test_pin_private:
         raise ValueError("No email/pin environment variables set")
-    hf.register_api_pin(f"{test_email_private}@gmail.com", test_pin_private)
+    hf.register_api_pin(f"{test_email_private}", test_pin_private)
     t0 = time.time()
     _execute_scenario(start_time_str, end_time_str)
     t1 = time.time()
