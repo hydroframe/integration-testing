@@ -33,8 +33,12 @@ jobs:
           python -m pip install pytest
 
       - name: Run Performance Tests
+        env:
+          TEST_EMAIL_PRIVATE: ${{ secrets.TEST_EMAIL_PRIVATE}}
+          TEST_PIN_PRIVATE: ${{ secrets.TEST_PIN_PRIVATE}}      
         run: |
           pytest performance/test_1pt_1wy.py --cache=cold
+          pytest performance/test_1pt_1wy.py --cache=hot
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
