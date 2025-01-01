@@ -9,6 +9,7 @@ import os
 import importlib
 import datetime
 import time
+import socket
 import hf_hydrodata as hf
 
 
@@ -24,36 +25,41 @@ def test_scenario(request):
     end_time = start_time.replace(year=int(wy + 1))
     start_time_str = start_time.strftime("%Y-%m-%d")
     end_time_str = end_time.strftime("%Y-%m-%d")
-    test_email_private = os.getenv("TEST_EMAIL_PRIVATE")
-    test_pin_private = os.getenv("TEST_PIN_PRIVATE")
-    if not test_email_private or not test_pin_private:
-        raise ValueError("No email/pin environment variables set")
-    hf.register_api_pin(f"{test_email_private}", test_pin_private)
+    test_email = os.getenv("TEST_EMAIL_PUBLIC")
+    test_pin = os.getenv("TEST_PIN_PUBLIC")
+    if test_email is not None and test_pin is not None:
+        print("Executing remotely using public email pin")
+        local_remote = "remote"
+        hf.register_api_pin(f"{test_email}", test_pin)
+    else:
+        local_remote = "local"
+        print("Executing locally without an email pin")
     t0 = time.time()
     _execute_scenario(start_time_str, end_time_str)
     t1 = time.time()
     duration = round(t1 - t0, 2)
-    _write_log(request, duration)
+    _write_log(request, local_remote, duration)
 
 
-def _write_log(request, duration):
+def _write_log(request, local_remote, duration):
     """Write the log artificate files"""
 
     scenario_name = "read_365_days_1_point"
     cache_state = request.config.getoption("--cache")
     wy = request.config.getoption("--wy")
+    cpus = request.config.getoption("--cpus")
     hf_hydrodata_version = importlib.metadata.version("hf_hydrodata")
     comment = request.config.getoption("--comment")
-    server = request.config.getoption("--server")
-    hydrodata_url = os.getenv("hydrodata_url", "https://hydrogen.princeton.edu")
-    hydrodata_url = hydrodata_url.replace("https://", "")
-    if server != "remote":
+    if local_remote == "remote":
+        hydrodata_url = os.getenv("hydrodata_url", "https://hydrogen.princeton.edu")
+        hydrodata_url = hydrodata_url.replace("https://", "")
+    else:
         hydrodata_url = ""
-
+    hostname = socket.gethostname()
     log_directory = "./artifacts"
     os.makedirs(log_directory, exist_ok=True)
     cur_date = datetime.datetime.now().strftime("%Y-%m-%d:%H:%M:%S")
-    line = f"{cur_date},{scenario_name},{hf_hydrodata_version},{hydrodata_url},{server},{cache_state},{wy},{comment},{duration}\n"
+    line = f"{cur_date},{scenario_name},{hf_hydrodata_version},{hydrodata_url},{local_remote},{hostname},{cpus},{cache_state},{wy},{comment},{duration}\n"
     with open(f"{log_directory}/log_artifact.csv", "a+") as stream:
         stream.write(line)
 

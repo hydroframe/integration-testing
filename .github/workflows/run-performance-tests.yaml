@@ -36,9 +36,11 @@ jobs:
         env:
           TEST_EMAIL_PRIVATE: ${{ secrets.TEST_EMAIL_PRIVATE}}
           TEST_PIN_PRIVATE: ${{ secrets.TEST_PIN_PRIVATE}}      
+          TEST_EMAIL_PUBLIC: ${{ secrets.TEST_EMAIL_PUBLIC}}
+          TEST_PIN_PUBLIC: ${{ secrets.TEST_PIN_PUBLIC}}      
         run: |
-          pytest -s performance/test_1pt_1wy.py --wy 2002 --cache=cold
-          pytest -s performance/test_1pt_1wy.py --wy 2002 --cache=hot
+          pytest -s performance/test_1pt_1wy.py --wy 2000 --cache=cold
+          pytest -s performance/test_1pt_1wy.py --wy 2000 --cache=hot
           echo "Show ./artifacts/log_artifact.csv file"
           cat ./artifacts/log_artifact.csv
 
