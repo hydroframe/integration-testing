@@ -39,8 +39,8 @@ jobs:
           TEST_EMAIL_PUBLIC: ${{ secrets.TEST_EMAIL_PUBLIC}}
           TEST_PIN_PUBLIC: ${{ secrets.TEST_PIN_PUBLIC}}      
         run: |
-          pytest -s performance/test_1pt_1wy.py --wy 2000 --cache=cold
-          pytest -s performance/test_1pt_1wy.py --wy 2000 --cache=hot
+          pytest -s performance/test_1pt_1wy.py --wy ${{ github.event.inputs.wy}} --cache=cold
+          pytest -s performance/test_1pt_1wy.py --wy ${{ github.event.inputs.wy}} --cache=hot
           echo "Show ./artifacts/log_artifact.csv file"
           cat ./artifacts/log_artifact.csv
 
