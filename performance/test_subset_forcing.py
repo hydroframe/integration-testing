@@ -18,8 +18,9 @@ def test_scenario(request):
     """
 
     local_remote = test_1pt_1wy.register_email_pin("private")
+    wy = request.config.getoption("--wy")
     t0 = time.time()
-    _execute_scenario()
+    _execute_scenario(wy)
     t1 = time.time()
     duration = round(t1 - t0, 2)
     scenario_name = "subset_forcing"
@@ -30,15 +31,15 @@ def test_scenario(request):
 
 
 
-def _execute_scenario():
+def _execute_scenario(wy):
     """Execute the scenario to be tested"""
 
     os.makedirs("./forcing_files", exist_ok=True)
     forcing_paths = st.subset_forcing(
         ij_bounds = (2865, 1143, 2923, 1184),
         grid="conus2",
-        start = "2007-10-01",
-        end="2007-11-01",
+        start = f"{wy}-10-01",
+        end=f"{wy}-11-01",
         dataset = "CW3E",
         write_dir="./forcing_files")
     assert len(forcing_paths.keys()) == 8
