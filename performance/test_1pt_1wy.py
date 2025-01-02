@@ -3,7 +3,7 @@ Performance test for the scenario to 1 point for 1 water year
 using hf_hydrodata.
 """
 
-# pylint: disable=C0301,W1514
+# pylint: disable=C0301,W1514,R0914
 
 import os
 import importlib
@@ -16,7 +16,43 @@ import hf_hydrodata as hf
 def test_scenario(request):
     """
     Test the scenario to get 365 days of 1 point and
-    create logging artifcat with performance information.
+    create logging artifact with performance information.
+    """
+
+    local_remote = register_email_pin()
+    (start_time_str, end_time_str) = get_wy_duration(request)
+    t0 = time.time()
+    _execute_scenario(start_time_str, end_time_str)
+    t1 = time.time()
+    duration = round(t1 - t0, 2)
+    scenario_name = "read_365_days_1_point"
+    write_log(scenario_name, request, local_remote, duration)
+
+
+def register_email_pin():
+    """
+    Register the configured email pin if running remote.
+    Returns:
+         Either "remote" or "local" depending if running remote.
+    """
+
+    test_email = os.getenv("TEST_EMAIL_PRIVATE")
+    test_pin = os.getenv("TEST_PIN_PRIVATE")
+    if test_email is not None and test_pin is not None:
+        print("Executing remotely using private email pin")
+        local_remote = "remote"
+        hf.register_api_pin(f"{test_email}", test_pin)
+    else:
+        local_remote = "local"
+        print("Executing locally without an email pin")
+    return local_remote
+
+
+def get_wy_duration(request):
+    """
+    Compute the start/end time of the water year specified by the request options.
+    Returns:
+        Tuple with (start_time_str, end_time_str)
     """
 
     wy = request.config.getoption("--wy")
@@ -25,26 +61,12 @@ def test_scenario(request):
     end_time = start_time.replace(year=int(wy + 1))
     start_time_str = start_time.strftime("%Y-%m-%d")
     end_time_str = end_time.strftime("%Y-%m-%d")
-    test_email = os.getenv("TEST_EMAIL_PUBLIC")
-    test_pin = os.getenv("TEST_PIN_PUBLIC")
-    if test_email is not None and test_pin is not None:
-        print("Executing remotely using public email pin")
-        local_remote = "remote"
-        hf.register_api_pin(f"{test_email}", test_pin)
-    else:
-        local_remote = "local"
-        print("Executing locally without an email pin")
-    t0 = time.time()
-    _execute_scenario(start_time_str, end_time_str)
-    t1 = time.time()
-    duration = round(t1 - t0, 2)
-    _write_log(request, local_remote, duration)
+    return (start_time_str, end_time_str)
 
 
-def _write_log(request, local_remote, duration):
+def write_log(scenario_name, request, local_remote, duration):
     """Write the log artificate files"""
 
-    scenario_name = "read_365_days_1_point"
     cache_state = request.config.getoption("--cache")
     wy = request.config.getoption("--wy")
     cpus = request.config.getoption("--cpus")
@@ -60,8 +82,10 @@ def _write_log(request, local_remote, duration):
     os.makedirs(log_directory, exist_ok=True)
     cur_date = datetime.datetime.now().strftime("%Y-%m-%d:%H:%M:%S")
     line = f"{cur_date},{scenario_name},{hf_hydrodata_version},{hydrodata_url},{local_remote},{hostname},{cpus},{cache_state},{wy},{comment},{duration}\n"
-    with open(f"{log_directory}/log_artifact.csv", "a+") as stream:
+    log_file = f"{log_directory}/log_artifact.csv"
+    with open(log_file, "a+") as stream:
         stream.write(line)
+    print(f"Wrote {log_file}")
 
 
 def _execute_scenario(start_time_str, end_time_str):
@@ -71,6 +95,7 @@ def _execute_scenario(start_time_str, end_time_str):
     options = {
         "dataset": "CW3E",
         "period": "hourly",
+        "dataset_version": "1.0",
         "variable": "precipitation",
         "start_time": start_time_str,
         "end_time": end_time_str,

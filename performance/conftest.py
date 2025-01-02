@@ -6,5 +6,6 @@ def pytest_addoption(parser):
 
     parser.addoption("--cache", action="store", default="cold")
     parser.addoption("--wy", action="store", default="1997")
+    parser.addoption("--wy_month", action="store", default="02")
     parser.addoption("--comment", action="store", default="")
     parser.addoption("--cpus", action="store", default="8")
