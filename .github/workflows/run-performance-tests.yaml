@@ -12,6 +12,10 @@ on:
         description: "Water year of data used for test"
         required: false
         default: "1997"
+  schedule:
+    # Run at 5am on Monday and Friday
+    - cron: '0 5 * * 1'
+    - cron: '0 5 * * 5'
 
 jobs:
   runscript:
