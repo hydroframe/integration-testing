@@ -17,7 +17,7 @@ def test_scenario(request):
     and create logging artifact with performance information.
     """
 
-    local_remote = test_1pt_1wy.register_email_pin()
+    local_remote = test_1pt_1wy.register_email_pin("private")
     (start_time_str, end_time_str) = get_time_range(request)
     t0 = time.time()
     _execute_scenario(start_time_str, end_time_str)

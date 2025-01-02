@@ -19,7 +19,7 @@ def test_scenario(request):
     create logging artifact with performance information.
     """
 
-    local_remote = register_email_pin()
+    local_remote = register_email_pin("public")
     (start_time_str, end_time_str) = get_wy_duration(request)
     t0 = time.time()
     _execute_scenario(start_time_str, end_time_str)
@@ -29,17 +29,22 @@ def test_scenario(request):
     write_log(scenario_name, request, local_remote, duration)
 
 
-def register_email_pin():
+def register_email_pin(login_type="private"):
     """
     Register the configured email pin if running remote.
     Returns:
          Either "remote" or "local" depending if running remote.
     """
 
-    test_email = os.getenv("TEST_EMAIL_PRIVATE")
-    test_pin = os.getenv("TEST_PIN_PRIVATE")
+    if login_type == "private":
+        test_email = os.getenv("TEST_EMAIL_PRIVATE")
+        test_pin = os.getenv("TEST_PIN_PRIVATE")
+    else:
+        test_email = os.getenv("TEST_EMAIL_PUBLIC")
+        test_pin = os.getenv("TEST_PIN_PUBLIC")
+
     if test_email is not None and test_pin is not None:
-        print("Executing remotely using private email pin")
+        print(f"Executing remotely using {login_type} email pin")
         local_remote = "remote"
         hf.register_api_pin(f"{test_email}", test_pin)
     else:
@@ -71,6 +76,7 @@ def write_log(scenario_name, request, local_remote, duration):
     wy = request.config.getoption("--wy")
     cpus = request.config.getoption("--cpus")
     hf_hydrodata_version = importlib.metadata.version("hf_hydrodata")
+    subsettools_version = importlib.metadata.version("subsettools")
     comment = request.config.getoption("--comment")
     if local_remote == "remote":
         hydrodata_url = os.getenv("hydrodata_url", "https://hydrogen.princeton.edu")
@@ -81,7 +87,7 @@ def write_log(scenario_name, request, local_remote, duration):
     log_directory = "./artifacts"
     os.makedirs(log_directory, exist_ok=True)
     cur_date = datetime.datetime.now().strftime("%Y-%m-%d:%H:%M:%S")
-    line = f"{cur_date},{scenario_name},{hf_hydrodata_version},{hydrodata_url},{local_remote},{hostname},{cpus},{cache_state},{wy},{comment},{duration}\n"
+    line = f"{cur_date},{scenario_name},{hf_hydrodata_version},{hydrodata_url},{subsettools_version},{local_remote},{hostname},{cpus},{cache_state},{wy},{comment},{duration}\n"
     log_file = f"{log_directory}/log_artifact.csv"
     with open(log_file, "a+") as stream:
         stream.write(line)
