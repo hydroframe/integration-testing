@@ -9,6 +9,7 @@ import os
 import importlib
 import datetime
 import time
+import pytz
 import socket
 import hf_hydrodata as hf
 
@@ -86,7 +87,9 @@ def write_log(scenario_name, request, local_remote, duration):
     hostname = socket.gethostname()
     log_directory = "./artifacts"
     os.makedirs(log_directory, exist_ok=True)
-    cur_date = datetime.datetime.now().strftime("%Y-%m-%d:%H:%M:%S")
+    est = pytz.timezone('US/Eastern')
+    current_time_est = datetime.datetime.now(est)
+    cur_date = current_time_est.strftime("%Y-%m-%d:%H:%M:%S")
     line = f"{cur_date},{scenario_name},{hf_hydrodata_version},{hydrodata_url},{subsettools_version},{local_remote},{hostname},{cpus},{cache_state},{wy},{comment},{duration}\n"
     log_file = f"{log_directory}/log_artifact.csv"
     with open(log_file, "a+") as stream:

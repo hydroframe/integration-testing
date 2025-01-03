@@ -13,9 +13,10 @@ on:
         required: false
         default: "1997"
   schedule:
-    # Run at 5am on Monday and Friday
-    - cron: '0 5 * * 1'
-    - cron: '0 5 * * 5'
+    # Run at 4am on Monday and Saturday
+    # Jenkins job runs 5am those days to download results
+    - cron: '0 4 * * 1'
+    - cron: '0 4 * * 6'
 
 jobs:
   runscript:
