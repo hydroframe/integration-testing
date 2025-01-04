@@ -11,7 +11,7 @@ on:
       wy:
         description: "Water year of data used for test"
         required: false
-        default: "1997"
+        default: "2002"
   schedule:
     # Run at 4am on Monday and Saturday
     # Jenkins job runs 5am those days to download results
