@@ -76,6 +76,7 @@ def write_log(scenario_name, request, local_remote, duration):
     cache_state = request.config.getoption("--cache")
     wy = request.config.getoption("--wy")
     cpus = request.config.getoption("--cpus")
+    users = request.config.getoption("--users")
     hf_hydrodata_version = importlib.metadata.version("hf_hydrodata")
     subsettools_version = importlib.metadata.version("subsettools")
     comment = request.config.getoption("--comment")
@@ -90,7 +91,7 @@ def write_log(scenario_name, request, local_remote, duration):
     est = pytz.timezone('US/Eastern')
     current_time_est = datetime.datetime.now(est)
     cur_date = current_time_est.strftime("%Y-%m-%d:%H:%M:%S")
-    line = f"{cur_date},{scenario_name},{hf_hydrodata_version},{hydrodata_url},{subsettools_version},{local_remote},{hostname},{cpus},{cache_state},{wy},{comment},{duration}\n"
+    line = f"{cur_date},{scenario_name},{hf_hydrodata_version},{hydrodata_url},{subsettools_version},{local_remote},{hostname},{cpus},{users},{cache_state},{wy},{comment},{duration}\n"
     log_file = f"{log_directory}/log_artifact.csv"
     with open(log_file, "a+") as stream:
         stream.write(line)

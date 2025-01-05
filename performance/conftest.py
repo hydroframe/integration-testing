@@ -9,3 +9,4 @@ def pytest_addoption(parser):
     parser.addoption("--wy_month", action="store", default="02")
     parser.addoption("--comment", action="store", default="")
     parser.addoption("--cpus", action="store", default="8")
+    parser.addoption("--users", action="store", default="1")

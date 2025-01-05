@@ -46,7 +46,7 @@ def append_csv_file(csv_contents, archive_csv_file):
         # Archive file does not exists, create it with a CSV file header
         with open(archive_csv_file, "a+") as fp:
             fp.write(
-                "date,scenario,hf_hydrodata_version,hydrodata_url,subsettools_version,remotelocal,server,cpus,hotcold,wy,comment,duration\n"
+                "date,scenario,hf_hydrodata_version,hydrodata_url,subsettools_version,remotelocal,server,cpus,users,hotcold,wy,comment,duration\n"
             )
 
     added_rows = 0
