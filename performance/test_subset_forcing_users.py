@@ -53,10 +53,10 @@ def _execute_scenario(data_dir, wy, index):
     """Execute the scenario to be tested"""
 
     os.makedirs(data_dir, exist_ok=True)
-    start_month = 10 + index if index <= 2 else index - 2
-    start_year = wy if index <= 2 else wy+1
-    end_month = 10 + index + 1 if index <= 1 else index - 1
-    end_year = wy if index <= 1 else wy+1
+    start_month = 10 + index if index <= 2 else ((index-3)%12) + 1
+    start_year = wy if index <= 2 else wy+int((index-3)/12)+1
+    end_month = 10 + index + 1 if index <= 1 else ((index-2)%12) + 1
+    end_year = wy if index <= 1 else wy+int((index-2)/12)+1
     start_str = f"{start_year}-{start_month:02}-01"
     end_str = f"{end_year}-{end_month:02}-01"
     forcing_paths = st.subset_forcing(

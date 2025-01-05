@@ -51,8 +51,8 @@ jobs:
           pytest -s performance/test_full_3d_pfb.py --wy=2003 --wy_month=${{ github.event.inputs.wy_month}} --cache=hot
           pytest -s performance/test_subset_forcing.py --wy=2007 --cache=cold
           pytest -s performance/test_subset_forcing.py --wy=2007 --cache=hot
-          pytest -s performance/test_subset_forcing_users.py --wy 2009 --cache=cold --users=2
-          pytest -s performance/test_subset_forcing_users.py --wy 2009 --cache=hot --users=2
+          pytest -s performance/test_subset_forcing_users.py --wy 2009 --cache=cold --users=3
+          pytest -s performance/test_subset_forcing_users.py --wy 2009 --cache=hot --users=3
           
 
           echo "Show ./artifacts/log_artifact.csv file"
