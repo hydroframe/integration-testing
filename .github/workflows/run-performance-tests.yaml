@@ -16,6 +16,7 @@ on:
     # Run at 4am on Monday and Saturday
     # Jenkins job runs 5am those days to download results
     - cron: '0 4 * * 1'
+    - cron: '0 14 * * 2'
     - cron: '0 4 * * 6'
 
 jobs:
