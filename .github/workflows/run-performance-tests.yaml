@@ -61,7 +61,7 @@ jobs:
           cat ./artifacts/log_artifact.csv
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: log-artifacts
           path: ./artifacts/
