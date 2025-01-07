@@ -25,6 +25,10 @@ def test_scenario(request):
     wy = request.config.getoption("--wy")
     wy = int(wy)
     data_dir = "/scratch/wh3248/forcing_years"
+    os.makedirs(data_dir, exist_ok=True)
+    if not os.path.exists(data_dir):
+        print("Do not run remotely since this uses too much disk space")
+        return
     t0 = time.time()
     _execute_scenario(data_dir, wy)
     t1 = time.time()
@@ -41,7 +45,6 @@ def test_scenario(request):
 def _execute_scenario(data_dir, wy):
     """Execute the scenario to be tested"""
 
-    os.makedirs(data_dir, exist_ok=True)
     forcing_paths = st.subset_forcing(
         ij_bounds = (2865, 1143, 2923, 1184),
         grid="conus2",
