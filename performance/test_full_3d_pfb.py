@@ -8,7 +8,7 @@ using hf_hydrodata.
 import time
 import datetime
 import hf_hydrodata as hf
-import test_1pt_1wy
+import utils
 
 
 def test_scenario(request):
@@ -17,14 +17,14 @@ def test_scenario(request):
     and create logging artifact with performance information.
     """
 
-    local_remote = test_1pt_1wy.register_email_pin("private")
+    local_remote = utils.register_email_pin("private")
     (start_time_str, end_time_str) = get_time_range(request)
     t0 = time.time()
     _execute_scenario(start_time_str, end_time_str)
     t1 = time.time()
     duration = round(t1 - t0, 2)
     scenario_name = "read_full_conus2_3d"
-    test_1pt_1wy.write_log(scenario_name, request, local_remote, duration)
+    utils.write_log(scenario_name, request, local_remote, duration)
 
 
 def get_time_range(request):

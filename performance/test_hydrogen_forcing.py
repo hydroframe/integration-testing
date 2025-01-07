@@ -14,7 +14,7 @@ import time
 import datetime
 import concurrent.futures
 import hf_hydrodata as hf
-import test_1pt_1wy
+import utils
 
 
 def test_scenario(request):
@@ -24,7 +24,7 @@ def test_scenario(request):
     are downloaded in a hydrogen forecast scenario. Subset the download with a HUC 8.
     """
 
-    local_remote = test_1pt_1wy.register_email_pin("private")
+    local_remote = utils.register_email_pin("private")
     wy = request.config.getoption("--wy")
     wy = int(wy)
     nthreads = int(request.config.getoption("--users"))
@@ -44,7 +44,7 @@ def test_scenario(request):
     t1 = time.time()
     duration = round(t1 - t0, 2)
     scenario_name = "hydrogen_forcing"
-    test_1pt_1wy.write_log(scenario_name, request, local_remote, duration)
+    utils.write_log(scenario_name, request, local_remote, duration)
 
 
 def _execute_scenario(wy, index):

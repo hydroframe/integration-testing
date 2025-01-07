@@ -45,10 +45,10 @@ jobs:
           TEST_EMAIL_PUBLIC: ${{ secrets.TEST_EMAIL_PUBLIC}}
           TEST_PIN_PUBLIC: ${{ secrets.TEST_PIN_PUBLIC}}      
         run: |
-          pytest -s performance/test_1pt_1wy.py --wy=${{ github.event.inputs.wy}} --cache=cold
-          pytest -s performance/test_1pt_1wy.py --wy=${{ github.event.inputs.wy}} --cache=hot
-          pytest -s performance/test_full_3d_pfb.py --wy=2003 --wy_month=${{ github.event.inputs.wy_month}} --cache=cold
-          pytest -s performance/test_full_3d_pfb.py --wy=2003 --wy_month=${{ github.event.inputs.wy_month}} --cache=hot
+          pytest -s performance/test_1pt_1wy.py --wy=2002 --cache=cold
+          pytest -s performance/test_1pt_1wy.py --wy=2002 --cache=hot
+          pytest -s performance/test_full_3d_pfb.py --wy=2003 --wy_month=02 --cache=cold
+          pytest -s performance/test_full_3d_pfb.py --wy=2003 --wy_month=02 --cache=hot
           pytest -s performance/test_subset_forcing.py --wy=2007 --cache=cold
           pytest -s performance/test_subset_forcing.py --wy=2007 --cache=hot
           pytest -s performance/test_subset_forcing_users.py --wy 2009 --cache=cold --users=3
