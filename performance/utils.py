@@ -26,13 +26,15 @@ def register_email_pin(login_type="private"):
         test_email = os.getenv("TEST_EMAIL_PUBLIC")
         test_pin = os.getenv("TEST_PIN_PUBLIC")
 
-    if test_email is not None and test_pin is not None:
+    if os.path.exists("/hydrodata"):
+        local_remote = "local"
+        print("Executing locally without an email pin")
+    elif test_email is not None and test_pin is not None:
         print(f"Executing remotely using {login_type} email pin")
         local_remote = "remote"
         hf.register_api_pin(f"{test_email}", test_pin)
     else:
-        local_remote = "local"
-        print("Executing locally without an email pin")
+        raise ValueError("Environment variables TEST_EMAIL_PUBLIC,TEST_PIN_PUBLIC not set.")
     return local_remote
 
 
