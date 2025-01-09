@@ -3,20 +3,11 @@ name: Run Performance Tests
 
 on:
   workflow_dispatch:
-    inputs:
-      cache:
-        description: "Cache of GPFS"
-        required: false
-        default: "cold"
-      wy:
-        description: "Water year of data used for test"
-        required: false
-        default: "2002"
   schedule:
-    # Run at 4am on Monday and Saturday
-    # Jenkins job runs 5am those days to download results
+    # Run at 4am on Mon, Wed Sat
+    # Jenkins job runs 5am those days to download results from GitHub Actions
     - cron: '0 4 * * 1'
-    - cron: '0 14 * * 2'
+    - cron: '0 4 * * 3'
     - cron: '0 4 * * 6'
 
 jobs:
@@ -56,6 +47,8 @@ jobs:
           pytest -s performance/test_subset_forcing_users.py --wy 2009 --cache=hot --users=3
           pytest -s performance/test_hydrogen_forcing.py --wy 1985 --cache=cold --users=-4
           pytest -s performance/test_hydrogen_forcing.py --wy 1985 --cache=hot --users=-4
+          pytest -s performance/test_cw3e_subset.py --wy 2019 --cache=cold
+          pytest -s performance/test_cw3e_subset.py --wy 2019 --cache=hot
           
 
           echo "Show ./artifacts/log_artifact.csv file"
