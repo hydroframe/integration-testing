@@ -1,5 +1,5 @@
 """
-Performance test for the scenario to 1 full conus2 sized pfb file
+Performance test for the scenario to 1 full conus1 sized pfb file
 using hf_hydrodata.
 """
 
@@ -13,7 +13,7 @@ import utils
 
 def test_scenario(request):
     """
-    Test the scenario to read a full sized conus2 sized pfb.
+    Test the scenario to read a full sized conus1 sized pfb.
     and create logging artifact with performance information.
     """
 
@@ -23,7 +23,7 @@ def test_scenario(request):
     _execute_scenario(start_time_str, end_time_str)
     t1 = time.time()
     duration = round(t1 - t0, 2)
-    scenario_name = "read_full_conus2_3d"
+    scenario_name = "read_full_conus1_3d"
     utils.write_log(scenario_name, request, local_remote, duration)
 
 
