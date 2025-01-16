@@ -80,3 +80,23 @@ def get_wy_duration(request):
     start_time_str = start_time.strftime("%Y-%m-%d")
     end_time_str = end_time.strftime("%Y-%m-%d")
     return (start_time_str, end_time_str)
+
+def get_1h_duration(request):
+    """
+    Get the start/end time of one hour of data for the water year specified in the configuration options.
+    Returns:
+        Tuple (start_time_str, end_time_str)
+    """
+    start_time_str = ""
+    end_time_str = ""
+    wy = int(request.config.getoption("--wy"))
+    wy_month = int(request.config.getoption("--wy_month"))
+
+    start_time = datetime.datetime.strptime(f"{wy}-06-01", "%Y-%m-%d")
+    if wy_month:
+        start_time = start_time.replace(month=int(wy_month))
+    end_time = start_time.replace(hour=1)
+    start_time_str = start_time.strftime("%Y-%m-%d %H:%M:%S")
+    end_time_str = end_time.strftime("%Y-%m-%d %H:%M:%S")
+
+    return (start_time_str, end_time_str)

@@ -49,6 +49,9 @@ jobs:
           pytest -s performance/test_hydrogen_forcing.py --wy 1985 --cache=hot --users=-4
           pytest -s performance/test_cw3e_subset.py --wy 2019 --cache=cold
           pytest -s performance/test_cw3e_subset.py --wy 2019 --cache=hot
+          pytest -s performance/test_1pt_1h.py --wy=1995 --cache=cold
+          pytest -s performance/test_1pt_1h.py --wy=1995 --cache=hot
+
           
 
           echo "Show ./artifacts/log_artifact.csv file"
