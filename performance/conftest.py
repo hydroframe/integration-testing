@@ -8,5 +8,5 @@ def pytest_addoption(parser):
     parser.addoption("--wy", action="store", default="2002")
     parser.addoption("--wy_month", action="store", default="02")
     parser.addoption("--comment", action="store", default="")
-    parser.addoption("--cpus", action="store", default="8")
+    parser.addoption("--cpus", action="store", default="64")
     parser.addoption("--users", action="store", default="1")
