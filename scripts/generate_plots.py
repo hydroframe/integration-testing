@@ -15,7 +15,7 @@ def main():
         return
     
     plot_scenario("read_1_hour_1_point", output_dir)
-    plot_sscenario("read_365_days_1_point", output_dir)
+    plot_scenario("read_365_days_1_point", output_dir)
     plot_scenario("subset_forcing", output_dir)
     plot_scenario("subset_forcing_2mo", output_dir)
     plot_scenario("hydrogen_forcing", output_dir)
