@@ -43,6 +43,8 @@ jobs:
           pytest -s performance/test_full_3d_pfb.py --wy=2003 --wy_month=02 --cache=hot
           pytest -s performance/test_subset_forcing.py --wy=2007 --cache=cold
           pytest -s performance/test_subset_forcing.py --wy=2007 --cache=hot
+          pytest -s performance/test_subset_forcing_2mo.py --wy=2007 --cache=cold
+          pytest -s performance/test_subset_forcing_2mo.py --wy=2007 --cache=hot
           pytest -s performance/test_subset_forcing_users.py --wy 2009 --cache=cold --users=3
           pytest -s performance/test_subset_forcing_users.py --wy 2009 --cache=hot --users=3
           pytest -s performance/test_hydrogen_forcing.py --wy 1985 --cache=cold --users=-4
@@ -50,9 +52,7 @@ jobs:
           pytest -s performance/test_cw3e_subset.py --wy 2019 --cache=cold
           pytest -s performance/test_cw3e_subset.py --wy 2019 --cache=hot
           pytest -s performance/test_1pt_1h.py --wy=1995 --cache=cold
-          pytest -s performance/test_1pt_1h.py --wy=1995 --cache=hot
-
-          
+          pytest -s performance/test_1pt_1h.py --wy=1995 --cache=hot         
 
           echo "Show ./artifacts/log_artifact.csv file"
           cat ./artifacts/log_artifact.csv
