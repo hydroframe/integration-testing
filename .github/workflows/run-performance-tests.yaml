@@ -52,9 +52,7 @@ jobs:
           pytest -s performance/test_cw3e_subset.py --wy 2019 --cache=cold
           pytest -s performance/test_cw3e_subset.py --wy 2019 --cache=hot
           pytest -s performance/test_1pt_1h.py --wy=1995 --cache=cold
-          pytest -s performance/test_1pt_1h.py --wy=1995 --cache=hot
-
-          
+          pytest -s performance/test_1pt_1h.py --wy=1995 --cache=hot         
 
           echo "Show ./artifacts/log_artifact.csv file"
           cat ./artifacts/log_artifact.csv
