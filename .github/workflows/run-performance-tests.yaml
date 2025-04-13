@@ -45,6 +45,8 @@ jobs:
           pytest -s performance/test_subset_forcing.py --wy=2007 --cache=hot
           pytest -s performance/test_subset_forcing_2mo.py --wy=2007 --cache=cold
           pytest -s performance/test_subset_forcing_2mo.py --wy=2007 --cache=hot
+          pytest -s performance/test_subset_forcing_3mo.py --wy=1983 --cache=cold
+          pytest -s performance/test_subset_forcing_3mo.py --wy=1983 --cache=hot
           pytest -s performance/test_subset_forcing_users.py --wy 2009 --cache=cold --users=3
           pytest -s performance/test_subset_forcing_users.py --wy 2009 --cache=hot --users=3
           pytest -s performance/test_hydrogen_forcing.py --wy 1985 --cache=cold --users=-4

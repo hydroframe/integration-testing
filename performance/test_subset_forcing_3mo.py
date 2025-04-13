@@ -13,8 +13,7 @@ import utils
 
 def test_scenario(request):
     """
-    Test the scenario to call subsettools function subset_forcing and log timing.
-    This tests download 2 months of forcing data for 8 variables.
+    This tests download 3 months of forcing data for 8 variables.
     """
 
     local_remote = utils.register_email_pin("private")
@@ -23,7 +22,7 @@ def test_scenario(request):
     _execute_scenario(wy)
     t1 = time.time()
     duration = round(t1 - t0, 2)
-    scenario_name = "subset_forcing_2mo"
+    scenario_name = "subset_forcing_3mo"
     utils.write_log(scenario_name, request, local_remote, duration)
     assert os.path.exists("forcing_files/CW3E.Press.000001_to_000024.pfb")
     shutil.rmtree("./forcing_files")
@@ -38,7 +37,7 @@ def _execute_scenario(wy):
         ij_bounds=(2865, 1143, 2923, 1184),
         grid="conus2",
         start=f"{wy}-03-01",
-        end=f"{wy}-05-01",
+        end=f"{wy}-06-01",
         dataset="CW3E",
         write_dir="./forcing_files",
     )
