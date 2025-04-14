@@ -18,6 +18,7 @@ def main():
     plot_scenario("read_365_days_1_point", output_dir)
     plot_scenario("subset_forcing", output_dir)
     plot_scenario("subset_forcing_2mo", output_dir)
+    plot_scenario("subset_forcing_3mo", output_dir)
     plot_scenario("hydrogen_forcing", output_dir)
     plot_scenario("read_full_conus1_3d", output_dir)
 
