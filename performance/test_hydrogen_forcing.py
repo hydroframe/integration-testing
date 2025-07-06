@@ -78,4 +78,4 @@ def _execute_scenario(wy, index):
             "huc_id": "10190004",
         }
         data = hf.get_gridded_data(options)
-        assert data.shape == (90, 29, 82)
+        assert data.shape == (90, 29, 83)
