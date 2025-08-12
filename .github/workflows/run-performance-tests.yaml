@@ -4,11 +4,10 @@ name: Run Performance Tests
 on:
   workflow_dispatch:
   schedule:
-    # Run at 4am on Mon, Wed Sat
+    # Run at 4am on Mon, Wed
     # Jenkins job runs 5am those days to download results from GitHub Actions
     - cron: '0 4 * * 1'
     - cron: '0 4 * * 3'
-    - cron: '0 4 * * 6'
 
 jobs:
   runscript:
