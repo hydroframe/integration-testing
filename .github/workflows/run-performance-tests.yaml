@@ -7,7 +7,6 @@ on:
     # Run at 4am on Mon, Wed
     # Jenkins job runs 5am those days to download results from GitHub Actions
     - cron: '0 4 * * 1'
-    - cron: '0 4 * * 3'
 
 jobs:
   runscript:
@@ -28,6 +27,7 @@ jobs:
           python -m pip install hf_hydrodata
           python -m pip install subsettools
           python -m pip install pytest
+          python -m pip install pytz
 
       - name: Run Performance Tests
         env:
