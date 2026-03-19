@@ -178,8 +178,8 @@ def get_site_observations() -> int:
         The number of bytes returned in the API calls.
     """
     date_start = "2003-01-01"
-    date_end = "2003-02-01"
-    huc_id = "14010002"
+    date_end = "2004-01-01"
+    huc_id = "14010001"
     filter_options = {
         "dataset": "usgs_nwis",
         "variable": "streamflow",
@@ -217,8 +217,8 @@ def get_site_observations() -> int:
         grid_point = conus1_ij_map[site_id]
         #print(site_id, grid_point)
         filter_options = {
-            "dataset": "NLDAS2",
-            "variable": "atmospheric_pressure",
+            "dataset": "conus1_baseline_mod",
+            "variable": "water_table_depth",
             "temporal_resolution": "daily",
             "date_start": date_start,
             "date_end": date_end,
