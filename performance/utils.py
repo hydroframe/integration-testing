@@ -49,7 +49,7 @@ def write_log(scenario_name, request, local_remote, duration):
     subsettools_version = importlib.metadata.version("subsettools")
     comment = request.config.getoption("--comment")
     if local_remote == "remote":
-        hydrodata_url = os.getenv("hydrodata_url", "https://hydrogen.princeton.edu")
+        hydrodata_url = os.getenv("HYDRODATA_URL", "https://hydrogen.princeton.edu")
         hydrodata_url = hydrodata_url.replace("https://", "")
     else:
         hydrodata_url = ""
