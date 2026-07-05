@@ -159,7 +159,7 @@ def send_request(calln: int, execution_results: list[dict], scenario:str):
                 "bytes_read": bytes_read,
             }
         except Exception as se:
-            print(se)
+            duration = time.time() - st_time
             result = {
                 "status": "failure",
                 "duration": duration,
@@ -215,7 +215,6 @@ def get_site_observations() -> int:
 
     for site_id in conus1_ij_map:
         grid_point = conus1_ij_map[site_id]
-        #print(site_id, grid_point)
         filter_options = {
             "dataset": "conus1_baseline_mod",
             "variable": "water_table_depth",
@@ -225,7 +224,6 @@ def get_site_observations() -> int:
             "grid_point": grid_point
         }
         data = hf.get_gridded_data(filter_options)
-        #print("Site data", site_id, data.shape)
         raw_bytes = data.tobytes()
         bytes_read = bytes_read + len(raw_bytes)
 
