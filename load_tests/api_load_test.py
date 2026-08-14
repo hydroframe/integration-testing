@@ -42,9 +42,15 @@ def main():
     The output will return load statitics about each scenario separately.
     """
     try:
+        test_email = os.getenv("TEST_EMAIL_PUBLIC")
+        test_pin = os.getenv("TEST_PIN_PUBLIC")
+        if not test_email or not test_pin:
+            print("Set the environment variables TEST_EMAIL_PUBLIC and TEST_PIN_PUBLIC")
+            return -1
         nparallel = int(sys.argv[1]) if len(sys.argv) > 1 else 1
         scenarios = [sys.argv[i] for i in range(0, len(sys.argv)) if i > 1]
         scenarios = scenarios if len(scenarios) > 0 else ["site_observations"]
+        print(f"Starting load test with {nparallel} users.")
         result = run_test(nparallel, scenarios)
         print(json.dumps(result, indent=2))
     except Exception as e:
