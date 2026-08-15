@@ -12,8 +12,8 @@ def main():
     server2 = "hydro-qa2.princeton.edu"
     start_time_1 = "2026-08-09 18:18:00"
     end_time_1 = "2026-08-09 18:57:00"
-    start_time_2 = "2026-08-09 18:04:00"
-    end_time_2 = "2026-08-09 18:17:00"
+    start_time_2 = "2026-08-14 18:11:00"
+    end_time_2 = "2026-08-14 18:18:010"
 
     compare_servers(server1, server2, start_time_1, end_time_1, start_time_2, end_time_2)
 
