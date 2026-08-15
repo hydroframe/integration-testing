@@ -2,11 +2,16 @@
 
 """
 This is a load test for the HydroGEN API server that tests how many parallal requests
-can be handled by the server. This has a command line argument for how many parallel requests
-to send and which scenarios to execute.
+can be handled by the server. This has a command line argument for how many parallel users
+to simulate while executing the specified scenario.
 
 This executes scenarios using hf_hydrodata to the API server defined by the
-environment variable HYDRODATA_URL, by default to https://hydrogen.princeton.edu.
+environment variable HYDRODATA_URL (by default to https://hydrogen.princeton.edu).
+
+This support 3 scenarios:
+    * grid_data            - runs get_gridded_data for 1wy of gridded data for a HUC 6
+    * point_data           - runs calls site_variables() and point_data() for 1wy for sites in NJ.
+    * site_observations    - runs the hackathon testing get both point_data and grid_data for 1wy data.
 
 
 Example Usage:
@@ -14,7 +19,6 @@ Example Usage:
     python api_load_test.py 10 site_observations
 
 Available scenaries are specified the SCENARIOS global variable.
-
 """
 
 
@@ -27,20 +31,17 @@ import concurrent.futures
 import hf_hydrodata as hf
 
 
-SCENARIOS = [
-    "site_observations",
-    "conus2_data"
-]
+SCENARIOS = ["site_observations", "grid_data", "point_data"]
 
 
 def main():
     """
     Main function to run the test from the command line.
     Options can be specified in command line. The first argument
-      is the number of parallel requests to execute (default 1).
-    The remaining arguments are a list of scenarios to execute/.
-    A parallel requests is execute for each scenarios for number of parallel requests.
-    The output will return load statitics about each scenario separately.
+      is the number of parallel requests to execute (default 1)
+      the second argument is the name of the scenario to execute.
+    A parallel request is executed for each scenarios for number of parallel requests.
+    The output will return statitics about the execution.
     """
     try:
         test_email = os.getenv("TEST_EMAIL_PUBLIC")
@@ -61,10 +62,10 @@ def main():
 
 def run_test(nparallel, scenarios=None):
     """
-    Run the load test.
+    Run the load test for the scenario for nparallel users.
     Args:
         nparallel:int   Number of parallel requests to execute
-        scenarios:list[str]     A list of scenarios to execute in the test
+        scenarios:list[str]     A list of scenarios to execute in the test (defaults).
     Returns:
         A array of dict with statistics about running the tests.
     There is a dict in the return list for each scenario.
@@ -119,9 +120,11 @@ def format_results(
             result["bytes_read"] = max_bytes_read
         result["max_duration"] = round(max_duration, 3)
         result["min_duration"] = round(min_duration, 3)
-        result["mean_duration"] = round(total_duration / len(execution_results[s_index]), 3)
+        result["mean_duration"] = round(
+            total_duration / len(execution_results[s_index]), 3
+        )
         duration_list.sort()
-        result["median_duration"] = round(duration_list[int(len(duration_list) / 2)],3)
+        result["median_duration"] = round(duration_list[int(len(duration_list) / 2)], 3)
         result["number_of_errors"] = number_of_errors
         result["types_of_errors"] = types_of_errors
         result["base_url"] = os.environ.get(
@@ -141,61 +144,97 @@ def execute_parallel_calls(
 
     futures = []
     nthreads = nparallel * len(scenarios)
+
+    # Start parallel threads to execute the scenarios
     with concurrent.futures.ThreadPoolExecutor(max_workers=nthreads) as executor:
         for calln in range(0, nparallel):
             for s_index, scenario in enumerate(scenarios):
                 future = executor.submit(
                     send_request, calln, execution_results[s_index], scenario
                 )
+    # Wait for all threads to complete
     _ = [future.result() for future in concurrent.futures.as_completed(futures)]
 
 
-def send_request(calln: int, execution_results: list[dict], scenario:str):
+def send_request(calln: int, execution_results: list[dict], scenario: str):
     """
-    Send an URL request to the API server and store into the execution_results
-    array calln entry with a dict describing the execution result.
+    Execute the specified scenario for a thread.
+    Parameters:
+        calln:              The index number of the thread executing
+        exeuction_results:  A dict to put the results indexed by the calln
+        scneario:           The name of the scenario to execute.
     """
     st_time = time.time()
     result = {}
-    if scenario == "site_observations":
-        try:
+    bytes_read = 0
+    try:
+        if scenario == "site_observations":
             bytes_read = get_site_observations()
-            duration = time.time() - st_time
-            result = {
-                "status": "success",
-                "duration": duration,
-                "bytes_read": bytes_read,
-            }
-        except Exception as se:
-            duration = time.time() - st_time
-            result = {
-                "status": "failure",
-                "duration": duration,
-                "message": str(se),
-            }
-    elif scenario == "conus2_data":
-        try:
+        elif scenario == "grid_data":
             bytes_read = get_grid_data()
-            duration = time.time() - st_time
-            result = {
-                "status": "success",
-                "duration": duration,
-                "bytes_read": bytes_read,
-            }
-        except Exception as se:
-            duration = time.time() - st_time
-            result = {
-                "status": "failure",
-                "duration": duration,
-                "message": str(se),
-            }
-    else:
-        raise ValueError(f"{scenario} is not a known scenario")
+        elif scenario == "point_data":
+            bytes_read = get_point_data()
+        else:
+            raise ValueError(f"{scenario} is not a known scenario")
+        duration = time.time() - st_time
+        result = {
+            "status": "success",
+            "duration": duration,
+            "bytes_read": bytes_read,
+        }
+    except Exception as se:
+        duration = time.time() - st_time
+        result = {
+            "status": "failure",
+            "duration": duration,
+            "message": str(se),
+        }
+    except Exception as se:
+        duration = time.time() - st_time
+        result = {
+            "status": "failure",
+            "duration": duration,
+            "message": str(se),
+        }
     execution_results[calln] = result
+
+
+def get_conus1_site_map(df):
+    "Create a dict map to map site_id to an array of [i,j] for conus1 ij point of site."
+    result = {}
+    for i, row in df.iterrows():
+        site_id = row["site_id"]
+        conus1_i = row["conus1_i"]
+        conus1_j = row["conus1_j"]
+        conus2_i = row["conus2_i"]
+        conus2_j = row["conus2_j"]
+        if is_nan(conus1_i, conus1_j) and not is_nan(conus2_i, conus2_j):
+            # We do not have conus1 i,j, but we do have conus2_ij
+            lat, lon = hf.to_latlon("conus2", conus2_i, conus2_j)
+            conus1_i, conus1_j = hf.to_ij("conus1", lat, lon)
+        result[site_id] = [int(conus1_i), int(conus1_j)]
+    return result
+
+
+def is_nan(value_i, value_j):
+    """Return True if the value_1 or value_j is None or nan."""
+
+    return (
+        value_i is None
+        or str(value_i) == "nan"
+        or value_j is None
+        or str(value_j) == "nan"
+    )
+
 
 def get_site_observations() -> int:
     """
-    Get site observations for a huc and read observations for 1 water for those sites.
+    This site observation scenario was used in the hackathon meeting
+    as a scenario to load test both point and gridded data.
+
+    Get site variables for all points in a HUC 8 and read observations 
+    for 1 water year of water table depth from those sites from 
+    the conus1_baseline_mod dataset using get_gridded_data().
     Raises:
         ValueError if any kind of error occurs in the API call.
     Returns:
@@ -211,14 +250,14 @@ def get_site_observations() -> int:
         "date_start": date_start,
         "date_end": date_end,
         "grid": "conus2",
-        "huc_id": [huc_id]
+        "huc_id": [huc_id],
     }
 
     # Get site variable data
     df = hf.get_site_variables(filter_options)
     df_bytes = int(df.memory_usage(deep=True).sum())
     bytes_read = df_bytes
-    site_ids = df['site_id'].tolist()
+    site_ids = df["site_id"].tolist()
     conus1_ij_map = get_conus1_site_map(df)
 
     # Get site observation values for the site_ids
@@ -245,7 +284,7 @@ def get_site_observations() -> int:
             "temporal_resolution": "daily",
             "date_start": date_start,
             "date_end": date_end,
-            "grid_point": grid_point
+            "grid_point": grid_point,
         }
         data = hf.get_gridded_data(filter_options)
         raw_bytes = data.tobytes()
@@ -254,9 +293,11 @@ def get_site_observations() -> int:
     bytes_read = bytes_read + df_bytes
     return bytes_read
 
+
 def get_grid_data() -> int:
     """
-    Get gridded_data from a HUC from conus2.
+    Read 1 year of gridded_data from a HUC 6 from conus2 precipitation data.
+    This reads 131 MB of data which is enough to run in queue.
     Raises:
         ValueError if any kind of error occurs in the API call.
     Returns:
@@ -272,7 +313,7 @@ def get_grid_data() -> int:
         "date_start": date_start,
         "date_end": date_end,
         "grid": "conus2",
-        "huc_id": huc_id
+        "huc_id": huc_id,
     }
 
     # Get site variable data
@@ -283,26 +324,36 @@ def get_grid_data() -> int:
     bytes_read = size * 8
     return bytes_read
 
-def get_conus1_site_map(df):
-    "Create a dict map to map site_id to an array of [i,j] for conus1 ij point of site."
-    result = {}
-    for i,row in df.iterrows():
-        site_id = row["site_id"]
-        conus1_i = row["conus1_i"]
-        conus1_j = row["conus1_j"]
-        conus2_i = row["conus2_i"]
-        conus2_j = row["conus2_j"]
-        if is_nan(conus1_i, conus1_j) and not is_nan(conus2_i, conus2_j):
-            # We do not have conus1 i,j, but we do have conus2_ij
-            lat, lon = hf.to_latlon("conus2", conus2_i, conus2_j)
-            conus1_i, conus1_j = hf.to_ij("conus1", lat, lon)
-        result[site_id] = [int(conus1_i), int(conus1_j)]
-    return result
 
-def is_nan(value_i, value_j):
-    """Return True if the value_1 or value_j is None or nan."""
+def get_point_data() -> int:
+    """
+    Calls both get_site_variables and get_point_data() using hf_hydrodata
+    to get info about all sites in NJ and data for 1wy from those sites.
+    This is about 107 sites for 365 days and about 348K of data
+    and this likely reads 107 .netcdf files to read the data for the sites.
+    Raises:
+        ValueError if any kind of error occurs in the API call.
+    Returns:
+        The estimated # of bytes returned in the API calls.
+    """
+    options = {
+        "dataset": "usgs_nwis",
+        "variable": "streamflow",
+        "temporal_resolution": "daily",
+        "aggregation": "mean",
+        "date_start": "2002-01-01",
+        "date_end": "2003-01-01",
+        "state": "NJ",
+    }
+    # Read site variables for query
+    _ = hf.get_site_variables(options)
+    bytes_read = 28000 # (got this from server side logs of actual download)
 
-    return value_i is None or str(value_i) == "nan" or value_j is None or str(value_j) == "nan"
+    # Read point data for query
+    _ = hf.get_point_data(options)
+    bytes_read = bytes_read + 320000 # (got this from server side logs of actual download)
+    return bytes_read
+
 
 if __name__ == "__main__":
     main()
