@@ -29,6 +29,7 @@ import hf_hydrodata as hf
 
 SCENARIOS = [
     "site_observations",
+    "conus2_data"
 ]
 
 
@@ -50,7 +51,8 @@ def main():
         nparallel = int(sys.argv[1]) if len(sys.argv) > 1 else 1
         scenarios = [sys.argv[i] for i in range(0, len(sys.argv)) if i > 1]
         scenarios = scenarios if len(scenarios) > 0 else ["site_observations"]
-        print(f"Starting load test with {nparallel} users.")
+        scenarios_str = ",".join(scenarios)
+        print(f"Starting load test of {scenarios_str} with {nparallel} users.")
         result = run_test(nparallel, scenarios)
         print(json.dumps(result, indent=2))
     except Exception as e:
@@ -171,6 +173,22 @@ def send_request(calln: int, execution_results: list[dict], scenario:str):
                 "duration": duration,
                 "message": str(se),
             }
+    elif scenario == "conus2_data":
+        try:
+            bytes_read = get_grid_data()
+            duration = time.time() - st_time
+            result = {
+                "status": "success",
+                "duration": duration,
+                "bytes_read": bytes_read,
+            }
+        except Exception as se:
+            duration = time.time() - st_time
+            result = {
+                "status": "failure",
+                "duration": duration,
+                "message": str(se),
+            }
     else:
         raise ValueError(f"{scenario} is not a known scenario")
     execution_results[calln] = result
@@ -234,6 +252,35 @@ def get_site_observations() -> int:
         bytes_read = bytes_read + len(raw_bytes)
 
     bytes_read = bytes_read + df_bytes
+    return bytes_read
+
+def get_grid_data() -> int:
+    """
+    Get gridded_data from a HUC from conus2.
+    Raises:
+        ValueError if any kind of error occurs in the API call.
+    Returns:
+        The number of bytes returned in the API calls.
+    """
+    date_start = "2003-01-01"
+    date_end = "2004-01-01"
+    huc_id = "140100"
+    filter_options = {
+        "dataset": "CW3E",
+        "variable": "precipitation",
+        "temporal_resolution": "daily",
+        "date_start": date_start,
+        "date_end": date_end,
+        "grid": "conus2",
+        "huc_id": huc_id
+    }
+
+    # Get site variable data
+    data = hf.get_gridded_data(filter_options)
+    size = 1
+    for dim in data.shape:
+        size = size * dim
+    bytes_read = size * 8
     return bytes_read
 
 def get_conus1_site_map(df):
