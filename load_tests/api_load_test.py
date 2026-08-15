@@ -2,11 +2,16 @@
 
 """
 This is a load test for the HydroGEN API server that tests how many parallal requests
-can be handled by the server. This has a command line argument for how many parallel requests
-to send and which scenarios to execute.
+can be handled by the server. This has a command line argument for how many parallel users
+to simulate while executing the specified scenario.
 
 This executes scenarios using hf_hydrodata to the API server defined by the
-environment variable HYDRODATA_URL, by default to https://hydrogen.princeton.edu.
+environment variable HYDRODATA_URL (by default to https://hydrogen.princeton.edu).
+
+This support 3 scenarios:
+    * grid_data            - runs get_gridded_data for 1wy of gridded data for a HUC 6
+    * point_data           - runs calls site_variables() and point_data() for 1wy for sites in NJ.
+    * site_observations    - runs the hackathon testing get both point_data and grid_data for 1wy data.
 
 
 Example Usage:
@@ -14,7 +19,6 @@ Example Usage:
     python api_load_test.py 10 site_observations
 
 Available scenaries are specified the SCENARIOS global variable.
-
 """
 
 
@@ -34,10 +38,10 @@ def main():
     """
     Main function to run the test from the command line.
     Options can be specified in command line. The first argument
-      is the number of parallel requests to execute (default 1).
-    The remaining arguments are a list of scenarios to execute/.
-    A parallel requests is execute for each scenarios for number of parallel requests.
-    The output will return load statitics about each scenario separately.
+      is the number of parallel requests to execute (default 1)
+      the second argument is the name of the scenario to execute.
+    A parallel request is executed for each scenarios for number of parallel requests.
+    The output will return statitics about the execution.
     """
     try:
         test_email = os.getenv("TEST_EMAIL_PUBLIC")
@@ -58,10 +62,10 @@ def main():
 
 def run_test(nparallel, scenarios=None):
     """
-    Run the load test.
+    Run the load test for the scenario for nparallel users.
     Args:
         nparallel:int   Number of parallel requests to execute
-        scenarios:list[str]     A list of scenarios to execute in the test
+        scenarios:list[str]     A list of scenarios to execute in the test (defaults).
     Returns:
         A array of dict with statistics about running the tests.
     There is a dict in the return list for each scenario.
@@ -140,19 +144,25 @@ def execute_parallel_calls(
 
     futures = []
     nthreads = nparallel * len(scenarios)
+
+    # Start parallel threads to execute the scenarios
     with concurrent.futures.ThreadPoolExecutor(max_workers=nthreads) as executor:
         for calln in range(0, nparallel):
             for s_index, scenario in enumerate(scenarios):
                 future = executor.submit(
                     send_request, calln, execution_results[s_index], scenario
                 )
+    # Wait for all threads to complete
     _ = [future.result() for future in concurrent.futures.as_completed(futures)]
 
 
 def send_request(calln: int, execution_results: list[dict], scenario: str):
     """
-    Send an URL request to the API server and store into the execution_results
-    array calln entry with a dict describing the execution result.
+    Execute the specified scenario for a thread.
+    Parameters:
+        calln:              The index number of the thread executing
+        exeuction_results:  A dict to put the results indexed by the calln
+        scneario:           The name of the scenario to execute.
     """
     st_time = time.time()
     result = {}
@@ -219,7 +229,12 @@ def is_nan(value_i, value_j):
 
 def get_site_observations() -> int:
     """
-    Get site observations for a huc and read observations for 1 water for those sites.
+    This site observation scenario was used in the hackathon meeting
+    as a scenario to load test both point and gridded data.
+
+    Get site variables for all points in a HUC 8 and read observations 
+    for 1 water year of water table depth from those sites from 
+    the conus1_baseline_mod dataset using get_gridded_data().
     Raises:
         ValueError if any kind of error occurs in the API call.
     Returns:
@@ -312,9 +327,10 @@ def get_grid_data() -> int:
 
 def get_point_data() -> int:
     """
-    Test hf_hydrodata.get_point_data() get 1 month sites in NJ.
-    This is about 108 sites for 31 days and about 30K of data
-    and this likely reads 108 .netcdf files to read the data for the sites.
+    Calls both get_site_variables and get_point_data() using hf_hydrodata
+    to get info about all sites in NJ and data for 1wy from those sites.
+    This is about 107 sites for 365 days and about 348K of data
+    and this likely reads 107 .netcdf files to read the data for the sites.
     Raises:
         ValueError if any kind of error occurs in the API call.
     Returns:
@@ -326,13 +342,16 @@ def get_point_data() -> int:
         "temporal_resolution": "daily",
         "aggregation": "mean",
         "date_start": "2002-01-01",
-        "date_end": "2002-02-01",
+        "date_end": "2003-01-01",
         "state": "NJ",
     }
-    df = hf.get_point_data(options)
-    nrows = len(df)
-    ncolumns = len(df.columns)
-    bytes_read = nrows * 40 + ncolumns * 267
+    # Read site variables for query
+    _ = hf.get_site_variables(options)
+    bytes_read = 28000 # (got this from server side logs of actual download)
+
+    # Read point data for query
+    _ = hf.get_point_data(options)
+    bytes_read = bytes_read + 320000 # (got this from server side logs of actual download)
     return bytes_read
 
 
