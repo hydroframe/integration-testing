@@ -27,10 +27,7 @@ import concurrent.futures
 import hf_hydrodata as hf
 
 
-SCENARIOS = [
-    "site_observations",
-    "conus2_data"
-]
+SCENARIOS = ["site_observations", "grid_data", "point_data"]
 
 
 def main():
@@ -119,9 +116,11 @@ def format_results(
             result["bytes_read"] = max_bytes_read
         result["max_duration"] = round(max_duration, 3)
         result["min_duration"] = round(min_duration, 3)
-        result["mean_duration"] = round(total_duration / len(execution_results[s_index]), 3)
+        result["mean_duration"] = round(
+            total_duration / len(execution_results[s_index]), 3
+        )
         duration_list.sort()
-        result["median_duration"] = round(duration_list[int(len(duration_list) / 2)],3)
+        result["median_duration"] = round(duration_list[int(len(duration_list) / 2)], 3)
         result["number_of_errors"] = number_of_errors
         result["types_of_errors"] = types_of_errors
         result["base_url"] = os.environ.get(
@@ -150,48 +149,73 @@ def execute_parallel_calls(
     _ = [future.result() for future in concurrent.futures.as_completed(futures)]
 
 
-def send_request(calln: int, execution_results: list[dict], scenario:str):
+def send_request(calln: int, execution_results: list[dict], scenario: str):
     """
     Send an URL request to the API server and store into the execution_results
     array calln entry with a dict describing the execution result.
     """
     st_time = time.time()
     result = {}
-    if scenario == "site_observations":
-        try:
+    bytes_read = 0
+    try:
+        if scenario == "site_observations":
             bytes_read = get_site_observations()
-            duration = time.time() - st_time
-            result = {
-                "status": "success",
-                "duration": duration,
-                "bytes_read": bytes_read,
-            }
-        except Exception as se:
-            duration = time.time() - st_time
-            result = {
-                "status": "failure",
-                "duration": duration,
-                "message": str(se),
-            }
-    elif scenario == "conus2_data":
-        try:
+        elif scenario == "grid_data":
             bytes_read = get_grid_data()
-            duration = time.time() - st_time
-            result = {
-                "status": "success",
-                "duration": duration,
-                "bytes_read": bytes_read,
-            }
-        except Exception as se:
-            duration = time.time() - st_time
-            result = {
-                "status": "failure",
-                "duration": duration,
-                "message": str(se),
-            }
-    else:
-        raise ValueError(f"{scenario} is not a known scenario")
+        elif scenario == "point_data":
+            bytes_read = get_point_data()
+        else:
+            raise ValueError(f"{scenario} is not a known scenario")
+        duration = time.time() - st_time
+        result = {
+            "status": "success",
+            "duration": duration,
+            "bytes_read": bytes_read,
+        }
+    except Exception as se:
+        duration = time.time() - st_time
+        result = {
+            "status": "failure",
+            "duration": duration,
+            "message": str(se),
+        }
+    except Exception as se:
+        duration = time.time() - st_time
+        result = {
+            "status": "failure",
+            "duration": duration,
+            "message": str(se),
+        }
     execution_results[calln] = result
+
+
+def get_conus1_site_map(df):
+    "Create a dict map to map site_id to an array of [i,j] for conus1 ij point of site."
+    result = {}
+    for i, row in df.iterrows():
+        site_id = row["site_id"]
+        conus1_i = row["conus1_i"]
+        conus1_j = row["conus1_j"]
+        conus2_i = row["conus2_i"]
+        conus2_j = row["conus2_j"]
+        if is_nan(conus1_i, conus1_j) and not is_nan(conus2_i, conus2_j):
+            # We do not have conus1 i,j, but we do have conus2_ij
+            lat, lon = hf.to_latlon("conus2", conus2_i, conus2_j)
+            conus1_i, conus1_j = hf.to_ij("conus1", lat, lon)
+        result[site_id] = [int(conus1_i), int(conus1_j)]
+    return result
+
+
+def is_nan(value_i, value_j):
+    """Return True if the value_1 or value_j is None or nan."""
+
+    return (
+        value_i is None
+        or str(value_i) == "nan"
+        or value_j is None
+        or str(value_j) == "nan"
+    )
+
 
 def get_site_observations() -> int:
     """
@@ -211,14 +235,14 @@ def get_site_observations() -> int:
         "date_start": date_start,
         "date_end": date_end,
         "grid": "conus2",
-        "huc_id": [huc_id]
+        "huc_id": [huc_id],
     }
 
     # Get site variable data
     df = hf.get_site_variables(filter_options)
     df_bytes = int(df.memory_usage(deep=True).sum())
     bytes_read = df_bytes
-    site_ids = df['site_id'].tolist()
+    site_ids = df["site_id"].tolist()
     conus1_ij_map = get_conus1_site_map(df)
 
     # Get site observation values for the site_ids
@@ -245,7 +269,7 @@ def get_site_observations() -> int:
             "temporal_resolution": "daily",
             "date_start": date_start,
             "date_end": date_end,
-            "grid_point": grid_point
+            "grid_point": grid_point,
         }
         data = hf.get_gridded_data(filter_options)
         raw_bytes = data.tobytes()
@@ -254,9 +278,11 @@ def get_site_observations() -> int:
     bytes_read = bytes_read + df_bytes
     return bytes_read
 
+
 def get_grid_data() -> int:
     """
-    Get gridded_data from a HUC from conus2.
+    Read 1 year of gridded_data from a HUC 6 from conus2 precipitation data.
+    This reads 131 MB of data which is enough to run in queue.
     Raises:
         ValueError if any kind of error occurs in the API call.
     Returns:
@@ -272,7 +298,7 @@ def get_grid_data() -> int:
         "date_start": date_start,
         "date_end": date_end,
         "grid": "conus2",
-        "huc_id": huc_id
+        "huc_id": huc_id,
     }
 
     # Get site variable data
@@ -283,26 +309,32 @@ def get_grid_data() -> int:
     bytes_read = size * 8
     return bytes_read
 
-def get_conus1_site_map(df):
-    "Create a dict map to map site_id to an array of [i,j] for conus1 ij point of site."
-    result = {}
-    for i,row in df.iterrows():
-        site_id = row["site_id"]
-        conus1_i = row["conus1_i"]
-        conus1_j = row["conus1_j"]
-        conus2_i = row["conus2_i"]
-        conus2_j = row["conus2_j"]
-        if is_nan(conus1_i, conus1_j) and not is_nan(conus2_i, conus2_j):
-            # We do not have conus1 i,j, but we do have conus2_ij
-            lat, lon = hf.to_latlon("conus2", conus2_i, conus2_j)
-            conus1_i, conus1_j = hf.to_ij("conus1", lat, lon)
-        result[site_id] = [int(conus1_i), int(conus1_j)]
-    return result
 
-def is_nan(value_i, value_j):
-    """Return True if the value_1 or value_j is None or nan."""
+def get_point_data() -> int:
+    """
+    Test hf_hydrodata.get_point_data() get 1 month sites in NJ.
+    This is about 108 sites for 31 days and about 30K of data
+    and this likely reads 108 .netcdf files to read the data for the sites.
+    Raises:
+        ValueError if any kind of error occurs in the API call.
+    Returns:
+        The estimated # of bytes returned in the API calls.
+    """
+    options = {
+        "dataset": "usgs_nwis",
+        "variable": "streamflow",
+        "temporal_resolution": "daily",
+        "aggregation": "mean",
+        "date_start": "2002-01-01",
+        "date_end": "2002-02-01",
+        "state": "NJ",
+    }
+    df = hf.get_point_data(options)
+    nrows = len(df)
+    ncolumns = len(df.columns)
+    bytes_read = nrows * 40 + ncolumns * 267
+    return bytes_read
 
-    return value_i is None or str(value_i) == "nan" or value_j is None or str(value_j) == "nan"
 
 if __name__ == "__main__":
     main()
