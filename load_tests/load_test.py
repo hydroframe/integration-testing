@@ -16,7 +16,7 @@ This support 3 scenarios:
 
 Example Usage:
     # Run 1 request to call site_observations
-    python api_load_test.py 10 site_observations
+    python load_test.py 10 site_observations
 
 Available scenaries are specified the SCENARIOS global variable.
 """
@@ -27,6 +27,9 @@ import os
 import time
 import json
 import datetime
+import importlib
+import pytz
+import socket
 import concurrent.futures
 import hf_hydrodata as hf
 
@@ -50,92 +53,89 @@ def main():
             print("Set the environment variables TEST_EMAIL_PUBLIC and TEST_PIN_PUBLIC")
             return -1
         nparallel = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-        scenarios = [sys.argv[i] for i in range(0, len(sys.argv)) if i > 1]
-        scenarios = scenarios if len(scenarios) > 0 else ["site_observations"]
-        scenarios_str = ",".join(scenarios)
-        print(f"Starting load test of {scenarios_str} with {nparallel} users.")
-        result = run_test(nparallel, scenarios)
+        scenario = sys.argv[2] if len(sys.argv) > 2 else "site_observations"
+        hot_cold = sys.argv[3] if len(sys.argv) > 3 else "hot"
+        if hot_cold not in ["hot", "cold"]:
+            print("The 3rd argument must be either hot or cold")
+            sys.exit(-1)
+        print(f"Starting load test of {scenario} with {nparallel} users.")
+        result = run_test(nparallel, scenario)
         print(json.dumps(result, indent=2))
+        write_log(scenario, nparallel, result, hot_cold)
     except Exception as e:
-        print(str(e))
+        print(e)
 
 
-def run_test(nparallel, scenarios=None):
+def run_test(nparallel, scenario):
     """
     Run the load test for the scenario for nparallel users.
     Args:
         nparallel:int   Number of parallel requests to execute
-        scenarios:list[str]     A list of scenarios to execute in the test (defaults).
+        scenario:str    The name of the scenario to execute.
     Returns:
         A array of dict with statistics about running the tests.
     There is a dict in the return list for each scenario.
     Each dict contains attributes: test_duration, max_duration, min_duration,
     mean_duration, median_duration, number_of_errors, types_of_errors.
     """
-    scenarios = scenarios if scenarios is not None else ["site_observations"]
-    for scenario in scenarios:
-        if scenario not in SCENARIOS:
-            scenario_list = ", ".join(SCENARIOS)
-            raise ValueError(f"Scenario '{scenario}' must be one of {scenario_list}")
-    execution_results = [
-        [{} for _ in range(nparallel)] for _ in range(0, len(scenarios))
-    ]
+    if scenario not in SCENARIOS:
+        scenario_list = ", ".join(SCENARIOS)
+        raise ValueError(f"Scenario '{scenario}' must be one of {scenario_list}")
+    execution_results = [{} for _ in range(nparallel)]
+    
     st_time = time.time()
-    execute_parallel_calls(nparallel, scenarios, execution_results)
+    execute_parallel_calls(nparallel, scenario, execution_results)
     duration = time.time() - st_time
-    result = format_results(duration, scenarios, execution_results)
+    result = format_results(duration, scenario, execution_results)
     return result
 
 
 def format_results(
-    test_duration: float, scenarios: list[str], execution_results: list[list[dict]]
+    test_duration: float, scenario: str, execution_results: list[dict]
 ) -> dict:
     """Format the execution results into a json string to return as the result"""
-    result_list = []
-    for s_index, scenario in enumerate(scenarios):
-        max_duration = 0
-        min_duration = 10000
-        total_duration = 0
-        number_of_errors = 0
-        duration_list = []
-        types_of_errors = []
-        max_bytes_read = 0
-        for entry in execution_results[s_index]:
-            duration = entry.get("duration")
-            max_duration = max(duration, max_duration)
-            min_duration = min(duration, min_duration)
-            total_duration = total_duration + duration
-            duration_list.append(duration)
-            if entry.get("status") == "failure":
-                number_of_errors = number_of_errors + 1
-                msg = entry.get("message", "")
-                if msg not in types_of_errors:
-                    types_of_errors.append(msg)
-            else:
-                max_bytes_read = max(max_bytes_read, entry.get("bytes_read", 0))
-        result = {"scenario": scenario}
-        result["test_duration"] = test_duration
-        result["nparallel"] = len(execution_results[s_index])
-        if max_bytes_read > 0:
-            result["bytes_read"] = max_bytes_read
-        result["max_duration"] = round(max_duration, 3)
-        result["min_duration"] = round(min_duration, 3)
-        result["mean_duration"] = round(
-            total_duration / len(execution_results[s_index]), 3
-        )
-        duration_list.sort()
-        result["median_duration"] = round(duration_list[int(len(duration_list) / 2)], 3)
-        result["number_of_errors"] = number_of_errors
-        result["types_of_errors"] = types_of_errors
-        result["base_url"] = os.environ.get(
-            "HYDRODATA_URL", "https://hydrogen.princeton.edu"
-        )
-        result_list.append(result)
-    return result_list
+    max_duration = 0
+    min_duration = 10000
+    total_duration = 0
+    number_of_errors = 0
+    duration_list = []
+    types_of_errors = []
+    max_bytes_read = 0
+    for entry in execution_results:
+        duration = entry.get("duration")
+        max_duration = max(duration, max_duration)
+        min_duration = min(duration, min_duration)
+        total_duration = total_duration + duration
+        duration_list.append(duration)
+        if entry.get("status") == "failure":
+            number_of_errors = number_of_errors + 1
+            msg = entry.get("message", "")
+            if msg not in types_of_errors:
+                types_of_errors.append(msg)
+        else:
+            max_bytes_read = max(max_bytes_read, entry.get("bytes_read", 0))
+    result = {"scenario": scenario}
+    result["test_duration"] = test_duration
+    result["nparallel"] = len(execution_results)
+    if max_bytes_read > 0:
+        result["bytes_read"] = max_bytes_read
+    result["max_duration"] = round(max_duration, 3)
+    result["min_duration"] = round(min_duration, 3)
+    result["mean_duration"] = round(
+        total_duration / len(execution_results), 3
+    )
+    duration_list.sort()
+    result["median_duration"] = round(duration_list[int(len(duration_list) / 2)], 3)
+    result["number_of_errors"] = number_of_errors
+    result["types_of_errors"] = types_of_errors
+    result["base_url"] = os.environ.get(
+        "HYDRODATA_URL", "https://hydrogen.princeton.edu"
+    )
+    return result
 
 
 def execute_parallel_calls(
-    nparallel: int, scenarios: list[str], execution_results: list[list[dict]]
+    nparallel: int, scenario: str, execution_results: list[dict]
 ):
     """
     Execute nparallel requests to the API server and collect the results
@@ -143,15 +143,14 @@ def execute_parallel_calls(
     """
 
     futures = []
-    nthreads = nparallel * len(scenarios)
+    nthreads = nparallel
 
     # Start parallel threads to execute the scenarios
     with concurrent.futures.ThreadPoolExecutor(max_workers=nthreads) as executor:
         for calln in range(0, nparallel):
-            for s_index, scenario in enumerate(scenarios):
-                future = executor.submit(
-                    send_request, calln, execution_results[s_index], scenario
-                )
+            future = executor.submit(
+                send_request, calln, execution_results, scenario
+            )
     # Wait for all threads to complete
     _ = [future.result() for future in concurrent.futures.as_completed(futures)]
 
@@ -189,12 +188,12 @@ def send_request(calln: int, execution_results: list[dict], scenario: str):
             "duration": duration,
             "message": str(se),
         }
-    except Exception as se:
+    except Exception as e:
         duration = time.time() - st_time
         result = {
             "status": "failure",
             "duration": duration,
-            "message": str(se),
+            "message": str(e),
         }
     execution_results[calln] = result
 
@@ -226,6 +225,33 @@ def is_nan(value_i, value_j):
         or str(value_j) == "nan"
     )
 
+def write_log(scenario_name, duration, execution_result, hot_cold="hot"):
+    """Write the log artifact files"""
+
+    local_remote = "local" if os.path.exists("/hydrodata") else "remote"
+    wy = ""
+    cpus = ""
+    users = ""
+    hf_hydrodata_version = importlib.metadata.version("hf_hydrodata")
+    subsettools_version = importlib.metadata.version("subsettools")
+    num_errors = execution_result.get("number_of_errors", 0)
+    comment = f"Error for {num_errors} user" if num_errors > 0 else ""
+    if local_remote == "remote":
+        hydrodata_url = os.getenv("HYDRODATA_URL", "https://hydrogen.princeton.edu")
+        hydrodata_url = hydrodata_url.replace("https://", "")
+    else:
+        hydrodata_url = ""
+    hostname = socket.gethostname()
+    log_directory = "./artifacts"
+    os.makedirs(log_directory, exist_ok=True)
+    est = pytz.timezone("US/Eastern")
+    current_time_est = datetime.datetime.now(est)
+    cur_date = current_time_est.strftime("%Y-%m-%d:%H:%M:%S")
+    line = f"{cur_date},{scenario_name},{hf_hydrodata_version},{hydrodata_url},{subsettools_version},{local_remote},{hostname},{cpus},{users},{hot_cold},{wy},{comment},{duration}\n"
+    log_file = f"{log_directory}/log_artifact.csv"
+    with open(log_file, "a+") as stream:
+        stream.write(line)
+    print(f"Wrote {log_file}")
 
 def get_site_observations() -> int:
     """
