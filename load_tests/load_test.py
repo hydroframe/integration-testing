@@ -52,6 +52,7 @@ def main():
         if not test_email or not test_pin:
             print("Set the environment variables TEST_EMAIL_PUBLIC and TEST_PIN_PUBLIC")
             return -1
+        hf.register_api_pin(test_email, test_pin)
         nparallel = int(sys.argv[1]) if len(sys.argv) > 1 else 1
         scenario = sys.argv[2] if len(sys.argv) > 2 else "site_observations"
         hot_cold = sys.argv[3] if len(sys.argv) > 3 else "hot"
