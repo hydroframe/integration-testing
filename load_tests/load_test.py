@@ -34,7 +34,7 @@ import concurrent.futures
 import hf_hydrodata as hf
 
 
-SCENARIOS = ["site_observations", "grid_data", "point_data"]
+SCENARIOS = ["site_observations", "grid_data", "point_data", "null_test"]
 
 
 def main():
@@ -173,6 +173,8 @@ def send_request(calln: int, execution_results: list[dict], scenario: str):
             bytes_read = get_grid_data()
         elif scenario == "point_data":
             bytes_read = get_point_data()
+        elif scenario == "null_test":
+            bytes_read = 0
         else:
             raise ValueError(f"{scenario} is not a known scenario")
         duration = time.time() - st_time
@@ -225,16 +227,17 @@ def is_nan(value_i, value_j):
         or str(value_j) == "nan"
     )
 
-def write_log(scenario_name, duration, execution_result, hot_cold="hot"):
+def write_log(scenario_name, nparallel, execution_result, hot_cold="hot"):
     """Write the log artifact files"""
 
     local_remote = "local" if os.path.exists("/hydrodata") else "remote"
     wy = ""
     cpus = ""
-    users = ""
+    users = nparallel
     hf_hydrodata_version = importlib.metadata.version("hf_hydrodata")
     subsettools_version = importlib.metadata.version("subsettools")
     num_errors = execution_result.get("number_of_errors", 0)
+    duration = execution_result.get("test_duration")
     comment = f"Error for {num_errors} user" if num_errors > 0 else ""
     if local_remote == "remote":
         hydrodata_url = os.getenv("HYDRODATA_URL", "https://hydrogen.princeton.edu")
