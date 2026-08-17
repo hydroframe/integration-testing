@@ -59,20 +59,21 @@ def main():
         if hot_cold not in ["hot", "cold"]:
             print("The 3rd argument must be either hot or cold")
             sys.exit(-1)
-        print(f"Starting load test of {scenario} with {nparallel} users.")
-        result = run_test(nparallel, scenario)
+        print(f"Starting load test of {scenario} with {nparallel} users ({hot_cold})")
+        result = run_test(nparallel, scenario, hot_cold)
         print(json.dumps(result, indent=2))
         write_log(scenario, nparallel, result, hot_cold)
     except Exception as e:
         print(e)
 
 
-def run_test(nparallel, scenario):
+def run_test(nparallel, scenario, hot_cold):
     """
     Run the load test for the scenario for nparallel users.
     Args:
         nparallel:int   Number of parallel requests to execute
         scenario:str    The name of the scenario to execute.
+        hot_cold:str    Either hot or cold. If cold try to change date ranges to force cold.
     Returns:
         A array of dict with statistics about running the tests.
     There is a dict in the return list for each scenario.
@@ -85,7 +86,7 @@ def run_test(nparallel, scenario):
     execution_results = [{} for _ in range(nparallel)]
     
     st_time = time.time()
-    execute_parallel_calls(nparallel, scenario, execution_results)
+    execute_parallel_calls(nparallel, scenario, execution_results, hot_cold)
     duration = time.time() - st_time
     result = format_results(duration, scenario, execution_results)
     return result
@@ -136,7 +137,7 @@ def format_results(
 
 
 def execute_parallel_calls(
-    nparallel: int, scenario: str, execution_results: list[dict]
+    nparallel: int, scenario: str, execution_results: list[dict], hot_cold:str
 ):
     """
     Execute nparallel requests to the API server and collect the results
@@ -150,30 +151,31 @@ def execute_parallel_calls(
     with concurrent.futures.ThreadPoolExecutor(max_workers=nthreads) as executor:
         for calln in range(0, nparallel):
             future = executor.submit(
-                send_request, calln, execution_results, scenario
+                send_request, calln, execution_results, scenario, hot_cold
             )
     # Wait for all threads to complete
     _ = [future.result() for future in concurrent.futures.as_completed(futures)]
 
 
-def send_request(calln: int, execution_results: list[dict], scenario: str):
+def send_request(calln: int, execution_results: list[dict], scenario: str, hot_cold:str):
     """
     Execute the specified scenario for a thread.
     Parameters:
         calln:              The index number of the thread executing
-        exeuction_results:  A dict to put the results indexed by the calln
-        scneario:           The name of the scenario to execute.
+        execution_results:  A dict to put the results indexed by the calln
+        scenario:           The name of the scenario to execute.
+        hot_cold:str        Either hot or cold. If cold try to change date ranges to force cold.
     """
     st_time = time.time()
     result = {}
     bytes_read = 0
     try:
         if scenario == "site_observations":
-            bytes_read = get_site_observations()
+            bytes_read = get_site_observations(hot_cold, calln)
         elif scenario == "grid_data":
-            bytes_read = get_grid_data()
+            bytes_read = get_grid_data(hot_cold, calln)
         elif scenario == "point_data":
-            bytes_read = get_point_data()
+            bytes_read = get_point_data(hot_cold, calln)
         elif scenario == "null_test":
             bytes_read = 0
         else:
@@ -257,7 +259,7 @@ def write_log(scenario_name, nparallel, execution_result, hot_cold="hot"):
         stream.write(line)
     print(f"Wrote {log_file}")
 
-def get_site_observations() -> int:
+def get_site_observations(hot_cold:str, calln:int) -> int:
     """
     This site observation scenario was used in the hackathon meeting
     as a scenario to load test both point and gridded data.
@@ -324,7 +326,7 @@ def get_site_observations() -> int:
     return bytes_read
 
 
-def get_grid_data() -> int:
+def get_grid_data(hot_cold:str, calln:int) -> int:
     """
     Read 1 year of gridded_data from a HUC 6 from conus2 precipitation data.
     This reads 131 MB of data which is enough to run in queue.
@@ -333,8 +335,12 @@ def get_grid_data() -> int:
     Returns:
         The number of bytes returned in the API calls.
     """
-    date_start = "2003-01-01"
-    date_end = "2004-01-01"
+    if hot_cold == "hot":
+        wy = 2003
+    else:
+        wy = 2004 + calln
+    date_start = f"{wy}-01-01"
+    date_end = f"{wy+1}-01-01"
     huc_id = "140100"
     filter_options = {
         "dataset": "CW3E",
@@ -355,7 +361,7 @@ def get_grid_data() -> int:
     return bytes_read
 
 
-def get_point_data() -> int:
+def get_point_data(hot_cold:str, calln:int) -> int:
     """
     Calls both get_site_variables and get_point_data() using hf_hydrodata
     to get info about all sites in NJ and data for 1wy from those sites.
@@ -366,13 +372,17 @@ def get_point_data() -> int:
     Returns:
         The estimated # of bytes returned in the API calls.
     """
+    if hot_cold == "hot":
+        wy = 2002
+    else:
+        wy = 2003 + calln
     options = {
         "dataset": "usgs_nwis",
         "variable": "streamflow",
         "temporal_resolution": "daily",
         "aggregation": "mean",
-        "date_start": "2002-01-01",
-        "date_end": "2003-01-01",
+        "date_start": f"{wy}-01-01",
+        "date_end": f"{wy+1}-01-01",
         "state": "NJ",
     }
     # Read site variables for query
