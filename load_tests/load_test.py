@@ -34,7 +34,7 @@ import concurrent.futures
 import hf_hydrodata as hf
 
 
-SCENARIOS = ["site_observations", "grid_data", "point_data", "null_test"]
+SCENARIOS = ["site_observations", "grid_data", "point_data", "null_test", "wy_sp"]
 
 
 def main():
@@ -178,6 +178,8 @@ def send_request(calln: int, execution_results: list[dict], scenario: str, hot_c
             bytes_read = get_point_data(hot_cold, calln)
         elif scenario == "null_test":
             bytes_read = 0
+        elif scenario == "wy_sp":
+            bytes_read = get_wy_sp()
         else:
             raise ValueError(f"{scenario} is not a known scenario")
         duration = time.time() - st_time
@@ -394,6 +396,13 @@ def get_point_data(hot_cold:str, calln:int) -> int:
     bytes_read = bytes_read + 320000 # (got this from server side logs of actual download)
     return bytes_read
 
+def get_wy_sp():
+    options = {"dataset": "CW3E", "variable": "precipitation", "temporal_resolution": "hourly",
+                "grid": "conus2", "grid_point": [2191, 2097],
+                "start_time": "1988-10-01", "end_time": "1989-10-01"}
+    data = hf.get_gridded_data(options)
+    print(data.shape)
+    return 10
 
 if __name__ == "__main__":
     main()
