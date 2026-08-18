@@ -179,7 +179,7 @@ def send_request(calln: int, execution_results: list[dict], scenario: str, hot_c
         elif scenario == "null_test":
             bytes_read = 0
         elif scenario == "wy_sp":
-            bytes_read = get_wy_sp()
+            bytes_read = get_wy_sp(hot_cold, calln)
         else:
             raise ValueError(f"{scenario} is not a known scenario")
         duration = time.time() - st_time
@@ -396,10 +396,12 @@ def get_point_data(hot_cold:str, calln:int) -> int:
     bytes_read = bytes_read + 320000 # (got this from server side logs of actual download)
     return bytes_read
 
-def get_wy_sp():
+def get_wy_sp(hot_cold, calln):
+    wy = 1980 + calln * 2
+    print(f"WY={wy}")
     options = {"dataset": "CW3E", "variable": "precipitation", "temporal_resolution": "hourly",
                 "grid": "conus2", "grid_point": [2191, 2097],
-                "start_time": "1988-10-01", "end_time": "1989-10-01"}
+                "start_time": f"{wy}-10-01", "end_time": f"{wy+1}-10-01"}
     data = hf.get_gridded_data(options)
     print(data.shape)
     return 10
