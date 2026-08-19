@@ -34,7 +34,7 @@ import concurrent.futures
 import hf_hydrodata as hf
 
 
-SCENARIOS = ["site_observations", "grid_data", "point_data", "null_test", "wy_sp"]
+SCENARIOS = ["site_observations", "grid_data", "point_data", "gridded_1p_1y", "point_1p_1y", "adhoc"]
 
 
 def main():
@@ -176,10 +176,12 @@ def send_request(calln: int, execution_results: list[dict], scenario: str, hot_c
             bytes_read = get_grid_data(hot_cold, calln)
         elif scenario == "point_data":
             bytes_read = get_point_data(hot_cold, calln)
-        elif scenario == "null_test":
-            bytes_read = 0
-        elif scenario == "wy_sp":
-            bytes_read = get_wy_sp(hot_cold, calln)
+        elif scenario == "adhoc":
+            bytes_read = adhoc(hot_cold, calln)
+        elif scenario == "gridded_1p_1y":
+            bytes_read = get_gridded_1p_1y(hot_cold, calln)
+        elif scenario == "point_1p_1y":
+            bytes_read = get_point_1p_1y(hot_cold, calln)
         else:
             raise ValueError(f"{scenario} is not a known scenario")
         duration = time.time() - st_time
@@ -396,15 +398,26 @@ def get_point_data(hot_cold:str, calln:int) -> int:
     bytes_read = bytes_read + 320000 # (got this from server side logs of actual download)
     return bytes_read
 
-def get_wy_sp(hot_cold, calln):
-    wy = 1980 + calln * 2
+def get_gridded_1p_1y(hot_cold, calln):
+    if hot_cold == "hot":
+        wy = 1980
+    else:
+        wy = 1980 + calln * 2
     print(f"WY={wy}")
     options = {"dataset": "CW3E", "variable": "precipitation", "temporal_resolution": "hourly",
                 "grid": "conus2", "grid_point": [2191, 2097],
                 "start_time": f"{wy}-10-01", "end_time": f"{wy+1}-10-01"}
     data = hf.get_gridded_data(options)
     print(data.shape)
+    # arbitrary return for byte size
     return 10
+
+def get_point_1p_1y(hot_cold, calln):
+    return 0
+
+def adhoc(hot_cold, calln):
+    """Placeholder for ad-hoc testing function as needed."""
+    return 0
 
 if __name__ == "__main__":
     main()
