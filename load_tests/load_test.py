@@ -413,7 +413,12 @@ def get_gridded_1p_1y(hot_cold, calln):
     return 10
 
 def get_point_1p_1y(hot_cold, calln):
-    return 0
+    options = {"dataset":"usgs_nwis", "variable":"streamflow", "temporal_resolution":"daily",
+               "aggregation": "mean", "date_start":"2025-10-01", "date_end":"2026-07-01",
+                "latitude_range":(39, 41), "longitude_range": (-106,-104)}
+    data = hf.get_point_data(options)
+    print(data.shape)
+    return 10 # arbitrary
 
 def adhoc(hot_cold, calln):
     """Placeholder for ad-hoc testing function as needed."""
