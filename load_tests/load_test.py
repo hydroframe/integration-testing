@@ -54,8 +54,12 @@ def main():
             return -1
         hf.register_api_pin(test_email, test_pin)
         nparallel = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-        scenario = sys.argv[2] if len(sys.argv) > 2 else "site_observations"
+        scenario = sys.argv[2] if len(sys.argv) > 2 else None
         hot_cold = sys.argv[3] if len(sys.argv) > 3 else "hot"
+        if scenario is None:
+            scenario_list = ", ".join(SCENARIOS)
+            print(f"Command line arguments must be #users and then one of: {scenario_list}")
+            sys.exit(-1)
         if hot_cold not in ["hot", "cold"]:
             print("The 3rd argument must be either hot or cold")
             sys.exit(-1)
