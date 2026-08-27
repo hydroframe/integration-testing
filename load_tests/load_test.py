@@ -346,7 +346,7 @@ def get_grid_data(hot_cold:str, calln:int) -> int:
     if hot_cold == "hot":
         wy = 2003
     else:
-        wy = 1990 + calln
+        wy = 1990 + calln % 30
     date_start = f"{wy}-01-01"
     date_end = f"{wy+1}-01-01"
     huc_id = "140100"
@@ -383,7 +383,7 @@ def get_point_data(hot_cold:str, calln:int) -> int:
     if hot_cold == "hot":
         wy = 2002
     else:
-        wy = 2003 + calln
+        wy = 2003 + calln % 20
     options = {
         "dataset": "usgs_nwis",
         "variable": "streamflow",
@@ -406,7 +406,7 @@ def get_gridded_1p_1y(hot_cold, calln):
     if hot_cold == "hot":
         wy = 1980
     else:
-        wy = 1980 + calln
+        wy = 1980 + calln % 30
     print(f"WY={wy}")
     options = {"dataset": "CW3E", "variable": "precipitation", "temporal_resolution": "hourly",
                 "grid": "conus2", "grid_point": [2191, 2097],
